@@ -1,0 +1,64 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Face Attendance System</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Face Attendance System</h1>
+    <form id="attendance-form">
+      <label>Subject:</label>
+      <input type="text" id="subject" required /><br>
+      <label>Period:</label>
+      <input type="number" id="period" required /><br>
+      <button type="submit">Start Attendance</button>
+    </form>
+    <button onclick="stopAttendance()">Stop Attendance</button><br><br>
+    <a href="https://docs.google.com/spreadsheets/d/1Pnl4EJDQm2LX8O15RxWK76H4WFnb7sDpn3KH2hMpYFM" target="_blank">View Google Sheet</a>
+  </div>
+
+  <script>
+  document.getElementById("attendance-form").onsubmit = function (e) {
+    e.preventDefault();
+    const subject = document.getElementById("subject").value.trim();
+    const period = document.getElementById("period").value.trim();
+
+    if (!subject || !period) {
+      alert("Please enter both Subject and Period.");
+      return;
+    }
+
+    fetch(`/check-attendance?subject=${subject}&period=${period}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.exists) {
+          const reuse = confirm(
+            `Attendance already exists for "${subject}" today in Period ${data.prevPeriod}.\n\nDo you want to REUSE it for Period ${period}?`
+          );
+          const reuseParam = reuse ? "true" : "false";
+          fetch(`/start-attendance?subject=${subject}&period=${period}&reuse=${reuseParam}`)
+            .then(res => res.text())
+            .then(msg => {
+              alert(msg);
+            });
+        } else {
+          fetch(`/start-attendance?subject=${subject}&period=${period}&reuse=false`)
+            .then(res => res.text())
+            .then(alert);
+        }
+      });
+  };
+
+  function stopAttendance() {
+    fetch("/stop-attendance")
+      .then(res => res.text())
+      .then(alert);
+  }
+</script>
+
+</body>
+</html>
